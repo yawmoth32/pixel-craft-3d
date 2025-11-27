@@ -1,0 +1,175 @@
+<!-- templates/admin.html -->
+{% extends "layout.html" %}
+{% block content %}
+<section>
+    <h2>⚙️ Panel de Administrador</h2>
+
+    <div class="admin-form">
+        <h3>{{ edit_product and '✏️ Editar producto' or '➕ Agregar producto' }}</h3>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="product_id" value="{{ edit_product.id if edit_product else '' }}">
+
+            <input type="text" name="name" 
+                   placeholder="Nombre del producto" 
+                   value="{{ edit_product.name if edit_product else '' }}" required>
+
+            <textarea name="description" 
+                      placeholder="Descripción">{{ edit_product.description if edit_product else '' }}</textarea>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <input type="number" step="0.01" name="price" 
+                       placeholder="Precio ($)" 
+                       value="{{ edit_product.price if edit_product else '' }}" required>
+                <input type="number" name="stock" 
+                       placeholder="Cantidad disponible" 
+                       value="{{ edit_product.stock if edit_product else 0 }}" min="0" required>
+            </div>
+
+            <label>
+                Categoría:
+                <select name="category" id="categorySelect">
+                    <option value="">Selecciona o escribe una nueva</option>
+                    {% for cat in categories %}
+                        {% if cat[0] %}
+                            <option value="{{ cat[0] }}" {% if edit_product and edit_product.category == cat[0] %}selected{% endif %}>
+                                {{ cat[0] }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                    <option value="">→ Otra (escribe abajo)</option>
+                </select>
+            </label>
+            <input type="text" name="category_custom" id="categoryCustom" 
+                   placeholder="Ej: Juguetes articulados"
+                   value="{% if edit_product and edit_product.category %}{{ edit_product.category }}{% endif %}">
+            <small style="color:#aaa;">Si eliges "Otra", escribe el nombre aquí.</small>
+
+            <div>
+                <label style="display:block; margin-bottom:0.5rem;">
+                    {% if edit_product and edit_product.image_filename %}
+                        Imagen actual: 
+                        <img src="{{ url_for('uploaded_file', filename=edit_product.image_filename) }}" 
+                             width="80" style="border-radius:4px; margin-top:0.5rem;">
+                    {% endif %}
+                    Cambiar imagen (opcional):
+                </label>
+                <input type="file" name="image" accept="image/*">
+            </div>
+
+            <button type="submit" class="btn" style="background:{{ edit_product and '#3498db' or '#2ecc71' }};">
+                {{ edit_product and '💾 Guardar cambios' or '➕ Agregar producto' }}
+            </button>
+            {% if edit_product %}
+                <a href="/admin" class="btn" style="background:#95a5a6;">❌ Cancelar edición</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <hr>
+
+    <h3>📦 Productos ({{ products|length }})</h3>
+    {% if products %}
+        <div class="products-grid">
+            {% for p in products %}
+            <div class="product-item">
+                <div class="product-img">
+                    {% if p.image_filename %}
+                        <img src="{{ url_for('uploaded_file', filename=p.image_filename) }}" alt="{{ p.name }}">
+                    {% else %}
+                        <div class="placeholder">Sin imagen</div>
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h4>{{ p.name }}</h4>
+                    <p><strong>Precio:</strong> $ {{ "%.2f"|format(p.price) }}</p>
+                    <p><strong>Categoría:</strong> {{ p.category or '—' }}</p>
+                    <p class="stock">
+                        <strong>Stock:</strong> 
+                        <span style="color: {{ p.stock > 0 and '#2ecc71' or '#e74c3c' }}">
+                            {{ p.stock }} unidad{{ p.stock != 1 and 'es' or '' }}
+                        </span>
+                    </p>
+                </div>
+                <div class="product-actions">
+                    <a href="/admin/edit/{{ p.id }}" class="btn" style="background:#3498db;">✏️ Editar</a>
+                    <a href="/admin/product/{{ p.id }}/delete" 
+                       class="btn" style="background:#e74c3c;" 
+                       onclick="return confirm('¿Eliminar \"{{ p.name }}\"?')">🗑️ Eliminar</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>📦 Aún no hay productos.</p>
+    {% endif %}
+</section>
+
+<script>
+document.getElementById('categorySelect').addEventListener('change', function() {
+    const custom = document.getElementById('categoryCustom');
+    custom.disabled = this.value !== '';
+    if (this.value !== '') custom.value = '';
+});
+</script>
+
+<style>
+.admin-form { margin-bottom: 2rem; }
+.admin-form input, .admin-form textarea, .admin-form select { width: 100%; margin-bottom: 0.75rem; }
+.admin-form img { max-width: 100%; border-radius: 4px; }
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.product-item {
+    background: rgba(40, 40, 50, 0.7);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.product-img {
+    height: 150px;
+    overflow: hidden;
+}
+.product-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    background: #222;
+}
+
+.product-info {
+    padding: 1rem;
+}
+.product-info h4 {
+    margin: 0 0 0.5rem;
+    color: #0ff;
+}
+.stock {
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
+
+.product-actions {
+    padding: 0.5rem 1rem;
+    background: rgba(0,0,0,0.2);
+    display: flex;
+    gap: 0.5rem;
+}
+.product-actions .btn {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}

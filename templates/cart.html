@@ -1,0 +1,38 @@
+<!-- templates/cart.html -->
+{% extends "layout.html" %}
+{% block content %}
+<section>
+    <h2>🛒 Tu carrito</h2>
+
+    {% if items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>$ {{ "%.2f"|format(item.product.price * item.quantity) }}</td>
+                    <td><a href="{{ url_for('remove_from_cart', item_id=item.id) }}" class="btn">🗑️</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h3>Total: $ {{ "%.2f"|format(total) }}</h3>
+        <form action="{{ url_for('checkout') }}" method="POST" style="display:inline;">
+            <button type="submit" class="btn" style="background:#e74c3c;">✅ Finalizar pedido</button>
+        </form>
+        <a href="/" class="btn">➕ Seguir comprando</a>
+    {% else %}
+        <p>Tu carrito está vacío.</p>
+        <a href="/" class="btn">Ver productos</a>
+    {% endif %}
+</section>
+{% endblock %}

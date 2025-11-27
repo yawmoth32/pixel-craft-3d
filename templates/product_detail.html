@@ -1,0 +1,221 @@
+<!-- templates/product_detail.html -->
+{% extends "layout.html" %}
+{% block content %}
+<section>
+    <a href="/" class="btn" style="display:inline-block; margin-bottom:1rem;">⬅️ Volver</a>
+
+    <div class="product-detail">
+        {% if product.image_filename %}
+            <img src="{{ url_for('uploaded_file', filename=product.image_filename) }}" alt="{{ product.name }}">
+        {% else %}
+            <div class="placeholder" style="height:300px;">Sin imagen</div>
+        {% endif %}
+        <div>
+            <h2>{{ product.name }}</h2>
+            <p class="price">$ {{ "%.2f"|format(product.price) }}</p>
+            <p class="stock">
+                {% if product.stock > 0 %}
+                    <strong>✅ Disponible:</strong> {{ product.stock }} unidad{{ product.stock != 1 and 'es' or '' }}
+                {% else %}
+                    <strong style="color:#e74c3c;">❌ Agotado</strong>
+                {% endif %}
+            </p>
+            <p><strong>Categoría:</strong> {{ product.category or 'Sin categoría' }}</p>
+            <p>{{ product.description }}</p>
+
+            <!-- ✅ Botón de agregar al carrito -->
+            <div class="add-to-cart-section">
+                {% if product.stock > 0 %}
+                    <a href="{{ url_for('add_to_cart', product_id=product.id) }}" 
+                       class="btn add-cart-btn-large" 
+                       onclick="showCartModal(); return false;">
+                        🛒 Agregar al carrito ($ {{ "%.2f"|format(product.price) }})
+                    </a>
+                {% else %}
+                    <p style="color:#e74c3c; font-weight:bold;">❌ Agotado</p>
+                {% endif %}
+            </div>
+
+            {% if current_user.is_authenticated and product.stock > 0 %}
+            <div class="review-form">
+                <h3>✍️ Deja tu opinión</h3>
+                <form method="POST" action="{{ url_for('add_review', product_id=product.id) }}">
+                    <label>
+                        Calificación:
+                        <select name="rating" required>
+                            <option value="">Selecciona...</option>
+                            <option value="5">⭐⭐⭐⭐⭐</option>
+                            <option value="4">⭐⭐⭐⭐</option>
+                            <option value="3">⭐⭐⭐</option>
+                            <option value="2">⭐⭐</option>
+                            <option value="1">⭐</option>
+                        </select>
+                    </label>
+                    <label>
+                        Comentario (mín. 10 caracteres):
+                        <textarea name="comment" rows="4" required></textarea>
+                    </label>
+                    <small style="color:#aaa;">⚠️ No se permiten ataques personales.</small>
+                    <button type="submit" class="btn">Enviar opinión</button>
+                </form>
+            </div>
+            {% elif current_user.is_authenticated %}
+                <p style="color:#e74c3c;">⚠️ No puedes dejar opiniones de productos agotados.</p>
+            {% else %}
+                <p><a href="/login">Inicia sesión</a> para dejar tu opinión.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="reviews">
+        <h3>💬 Opiniones ({{ reviews|length }})</h3>
+        {% if reviews %}
+            {% for r in reviews %}
+            <div class="review">
+                <div class="review-header">
+                    <strong>{{ r.user.nombre or r.user.username }}</strong>
+                    <span class="rating">
+                        {% for i in range(r.rating) %}⭐{% endfor %}
+                    </span>
+                    <small>{{ r.created_at.strftime('%d/%m') }}</small>
+                </div>
+                <p>{{ r.comment }}</p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>Aún no hay opiniones aprobadas.</p>
+        {% endif %}
+    </div>
+
+    {% if current_user.is_authenticated and current_user.role == 'admin' %}
+    <div class="admin-panel">
+        <h3>🛠️ Reseñas pendientes</h3>
+        {% set pending_reviews = product.reviews | selectattr('approved', '==', false) | list %}
+        {% if pending_reviews %}
+            <table>
+                <thead><tr><th>Usuario</th><th>Calif.</th><th>Comentario</th><th>Acciones</th></tr></thead>
+                <tbody>
+                {% for r in pending_reviews %}
+                <tr>
+                    <td>{{ r.user.username }}</td>
+                    <td>{{ r.rating }} ⭐</td>
+                    <td>"{{ r.comment[:80] }}{{ r.comment|length > 80 and '...' or '' }}"</td>
+                    <td>
+                        <a href="{{ url_for('approve_review', review_id=r.id) }}" class="btn" style="background:#2ecc71;">✅</a>
+                        <a href="{{ url_for('delete_review', review_id=r.id) }}" class="btn" style="background:#e74c3c;">🗑️</a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>✅ No hay pendientes.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+
+<style>
+.product-detail { display: flex; flex-wrap: wrap; gap: 2rem; }
+.product-detail img { max-width: 300px; border-radius: 8px; }
+.product-detail > div { flex: 1; min-width: 300px; }
+
+/* Estilos para botón de carrito */
+.add-to-cart-section {
+    margin: 1.5rem 0;
+    padding-top: 1rem;
+    border-top: 1px dashed #444;
+}
+.add-cart-btn-large {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.2rem;
+    margin: 1.5rem 0;
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+    transition: all 0.3s;
+}
+.add-cart-btn-large:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.6);
+}
+
+.review-form { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #444; }
+.review { background: rgba(40,40,50,0.7); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.admin-panel { background: rgba(60,20,60,0.6); padding: 1rem; border-radius: 8px; margin-top: 2rem; }
+.stock { font-weight: bold; margin: 0.5rem 0; }
+</style>
+
+<!-- ✅ Modal de carrito (reutilizado) -->
+<div id="cartModal">
+    <div class="modal-content">
+        <h3>✅ ¡Producto agregado!</h3>
+        <p>¿Qué deseas hacer ahora?</p>
+        <a href="/" class="btn" style="background:#3498db;">🔍 Seguir comprando</a>
+        <a href="/cart" class="btn" style="background:#2ecc71;">🛒 Ir al carrito</a>
+        <a href="/checkout" class="btn" style="background:#e74c3c;" onclick="event.preventDefault(); document.getElementById('checkoutForm').submit();">💳 Comprar ahora</a>
+        <form id="checkoutForm" action="/checkout" method="POST" style="display:none;"></form>
+        <div style="margin-top:1.5rem;">
+            <button onclick="closeCartModal()" class="btn" style="background:#95a5a6;">❌ Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<style>
+#cartModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+#cartModal .modal-content {
+    background: rgba(20, 20, 30, 0.95);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    max-width: 400px;
+    border: 2px solid #0ff;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+    animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+#cartModal h3 { color: #0ff; margin: 0 0 1.5rem; font-size: 1.5rem; }
+#cartModal .btn { margin: 0.5rem; padding: 0.8rem 1.5rem; font-size: 1.1rem; width: auto; }
+</style>
+
+<script>
+function showCartModal() {
+    document.getElementById('cartModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+function closeCartModal() {
+    document.getElementById('cartModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeCartModal();
+    }
+});
+document.getElementById('cartModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCartModal();
+    }
+});
+</script>
+{% endblock %}

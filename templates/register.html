@@ -1,0 +1,102 @@
+<!-- templates/register.html -->
+{% extends "layout.html" %}
+{% block title %}Registro - Pixel Craft 3D{% endblock %}
+{% block content %}
+<section>
+    <h2>🔐 Crear cuenta</h2>
+
+    <form method="POST" id="registerForm">
+        <label for="username">Usuario</label>
+        <input type="text" name="username" id="username" placeholder="Ej: artista3d" required minlength="3">
+
+        <label for="email">Correo electrónico</label>
+        <input type="email" name="email" id="email" placeholder="tu@correo.com" required>
+
+        <label for="password">Contraseña</label>
+        <div class="password-container">
+            <input type="password" name="password" id="password" placeholder="••••••••" required minlength="8">
+            <button type="button" id="togglePassword">👁️</button>
+        </div>
+
+        <!-- Medidor de seguridad -->
+        <div class="password-strength">
+            <div class="strength-bar">
+                <div id="strength-fill"></div>
+            </div>
+            <div id="strength-message" class="strength-message">Mínimo 8 caracteres</div>
+        </div>
+
+        <button type="submit" id="submitBtn" disabled>Registrarse</button>
+    </form>
+
+    <p class="hint">
+        💡 Tu contraseña debe tener: al menos 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo (ej: !, @, #).
+    </p>
+</section>
+
+<style>
+.password-container { position: relative; }
+.password-container input { padding-right: 40px; width: 100%; }
+.password-container button {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: transparent; border: none; color: #0ff; cursor: pointer; font-size: 1.2rem;
+}
+.password-strength { margin: 1rem 0; }
+.strength-bar { height: 6px; background: #333; border-radius: 3px; overflow: hidden; }
+.strength-bar #strength-fill { height: 100%; width: 0%; transition: width 0.3s, background-color 0.3s; }
+.strength-message { font-size: 0.85rem; margin-top: 0.3rem; }
+.hint { font-size: 0.8rem; color: #aaa; margin-top: 1rem; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const passwordInput = document.getElementById('password');
+    const strengthFill = document.getElementById('strength-fill');
+    const strengthMessage = document.getElementById('strength-message');
+    const submitBtn = document.getElementById('submitBtn');
+    const toggleBtn = document.getElementById('togglePassword');
+
+    passwordInput.addEventListener('input', checkPasswordStrength);
+
+    function checkPasswordStrength() {
+        const pwd = passwordInput.value;
+        let score = 0;
+        let messages = [];
+
+        if (pwd.length >= 8) score += 1; else messages.push("Mínimo 8 caracteres");
+        if (/[A-Z]/.test(pwd)) score += 1; else messages.push("Una mayúscula (A-Z)");
+        if (/[a-z]/.test(pwd)) score += 1; else messages.push("Una minúscula (a-z)");
+        if (/\d/.test(pwd)) score += 1; else messages.push("Un número (0-9)");
+        if (/[^A-Za-z0-9]/.test(pwd)) score += 1; else messages.push("Un símbolo (!, @, #, etc.)");
+
+        const width = (score / 5) * 100;
+        strengthFill.style.width = width + '%';
+
+        if (score <= 1) strengthFill.style.backgroundColor = '#e74c3c';
+        else if (score <= 3) strengthFill.style.backgroundColor = '#f39c12';
+        else if (score === 4) strengthFill.style.backgroundColor = '#3498db';
+        else strengthFill.style.backgroundColor = '#2ecc71';
+
+        if (pwd === '') {
+            strengthMessage.textContent = 'Mínimo 8 caracteres';
+            strengthMessage.style.color = '#aaa';
+        } else if (score === 5) {
+            strengthMessage.textContent = '✅ Contraseña segura';
+            strengthMessage.style.color = '#2ecc71';
+        } else {
+            strengthMessage.textContent = '⚠️ Falta: ' + messages.join(', ');
+            strengthMessage.style.color = '#e74c3c';
+        }
+
+        submitBtn.disabled = score < 4;
+    }
+
+    toggleBtn.addEventListener('click', function () {
+        const type = passwordInput.type === 'password' ? 'text' : 'password';
+        passwordInput.type = type;
+        toggleBtn.textContent = type === 'password' ? '👁️' : '🔒';
+    });
+});
+</script>
+{% endblock %}

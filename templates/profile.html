@@ -1,0 +1,64 @@
+<!-- templates/profile.html -->
+{% extends "layout.html" %}
+{% block content %}
+<section>
+    <h2>👤 Mi Perfil</h2>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alerts">
+                {% for msg in messages %}
+                    <div class="alert">{{ msg }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="profile-form">
+        <label>Nombre</label>
+        <input type="text" name="nombre" value="{{ user.nombre or '' }}" placeholder="Tu nombre" required>
+
+        <label>Apellido</label>
+        <input type="text" name="apellido" value="{{ user.apellido or '' }}" placeholder="Tu apellido" required>
+
+        <label>Teléfono</label>
+        <input type="text" name="telefono" value="{{ user.telefono or '' }}" placeholder="Ej: +5493814499884">
+
+        <label>Dirección</label>
+        <textarea name="direccion" placeholder="Tu dirección completa">{{ user.direccion or '' }}</textarea>
+
+        <button type="submit" class="btn">💾 Guardar cambios</button>
+    </form>
+
+    <div style="margin-top: 2rem;">
+        <a href="/cart" class="btn" style="background:#2ecc71;">🛒 Ver mi carrito</a>
+        <a href="/logout" class="btn" style="background:#e74c3c;">❌ Cerrar sesión</a>
+    </div>
+</section>
+
+<style>
+.profile-form {
+    max-width: 600px;
+    margin: 2rem auto;
+}
+.profile-form input, .profile-form textarea {
+    width: 100%;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border: 1px solid rgba(0,255,255,0.3);
+    background: rgba(30,30,40,0.7);
+    color: white;
+    border-radius: 6px;
+}
+.profile-form button {
+    background: linear-gradient(45deg, #0ff, #0f9);
+    color: black;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,333 @@
+<!-- templates/index.html -->
+{% extends "layout.html" %}
+{% block content %}
+<section>
+    <!-- ✅ Sección destacada: Estadísticas -->
+    <div class="stats-highlight">
+        <div class="stat-card">
+            <h3>🔥 Más vendidos</h3>
+            <div class="product-list">
+                {% for p in top_sold[:3] %}
+                    <div class="stat-product">
+                        {% if p.image_filename %}
+                            <img src="{{ url_for('uploaded_file', filename=p.image_filename) }}" width="40" style="border-radius:4px;">
+                        {% endif %}
+                        <div>
+                            <strong>{{ p.name }}</strong>
+                            <div style="color:#0ff;">{{ p.total_sold }} vendido{{ p.total_sold != 1 and 's' or '' }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <p>No hay ventas aún.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h3>👁️ Más visitado</h3>
+            {% if most_viewed %}
+                <div class="stat-product featured">
+                    {% if most_viewed.image_filename %}
+                        <img src="{{ url_for('uploaded_file', filename=most_viewed.image_filename) }}" width="60" style="border-radius:6px;">
+                    {% endif %}
+                    <div>
+                        <strong>{{ most_viewed.name }}</strong>
+                        <div style="color:#0ff;">{{ most_viewed.views }} visitas</div>
+                    </div>
+                </div>
+            {% else %}
+                <p>No hay visitas aún.</p>
+            {% endif %}
+        </div>
+
+        <div class="stat-card">
+            <h3>💬 Más comentado</h3>
+            {% if most_reviewed %}
+                <div class="stat-product featured">
+                    {% if most_reviewed.image_filename %}
+                        <img src="{{ url_for('uploaded_file', filename=most_reviewed.image_filename) }}" width="60" style="border-radius:6px;">
+                    {% endif %}
+                    <div>
+                        <strong>{{ most_reviewed.name }}</strong>
+                        <div style="color:#0ff;">{{ most_reviewed.reviews|selectattr('approved', '==', true)|list|length }} opinión{{ most_reviewed.reviews|selectattr('approved', '==', true)|list|length != 1 and 'es' or '' }}</div>
+                    </div>
+                </div>
+            {% else %}
+                <p>No hay opiniones aún.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Productos por categoría -->
+    {% if categories|length > 0 %}
+        {% for cat in categories %}
+            <h2>📦 {{ cat[0] }}</h2>
+            <div class="product-grid">
+                {% for p in products if p.category == cat[0] %}
+                    <!-- ✅ Tarjeta clickeable con botón de agregar -->
+                    <a href="{{ url_for('product_detail', product_id=p.id) }}" class="product-card-link">
+                        <div class="product-card">
+                            {% if p.image_filename %}
+                                <img src="{{ url_for('uploaded_file', filename=p.image_filename) }}" alt="{{ p.name }}">
+                            {% else %}
+                                <div class="placeholder">Sin imagen</div>
+                            {% endif %}
+                            <h3>{{ p.name }}</h3>
+                            <p>{{ p.description[:80] }}...</p>
+                            <p class="price">$ {{ "%.2f"|format(p.price) }}</p>
+                            <p class="stock">
+                                {% if p.stock > 0 %}
+                                    <span style="color:#2ecc71;">✅ {{ p.stock }} disp.</span>
+                                {% else %}
+                                    <span style="color:#e74c3c;">❌ Agotado</span>
+                                {% endif %}
+                            </p>
+                            {% if p.stock > 0 %}
+                                <a href="{{ url_for('add_to_cart', product_id=p.id) }}" 
+                                   class="btn add-cart-btn" 
+                                   onclick="showCartModal(); return false;">
+                                    🛒 Agregar al carrito
+                                </a>
+                            {% endif %}
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <h2>🌟 Productos</h2>
+        <div class="product-grid">
+            {% for p in products %}
+                <a href="{{ url_for('product_detail', product_id=p.id) }}" class="product-card-link">
+                    <div class="product-card">
+                        {% if p.image_filename %}
+                            <img src="{{ url_for('uploaded_file', filename=p.image_filename) }}" alt="{{ p.name }}">
+                        {% else %}
+                            <div class="placeholder">Sin imagen</div>
+                        {% endif %}
+                        <h3>{{ p.name }}</h3>
+                        <p>{{ p.description[:80] }}...</p>
+                        <p class="price">$ {{ "%.2f"|format(p.price) }}</p>
+                        <p class="stock">
+                            {% if p.stock > 0 %}
+                                <span style="color:#2ecc71;">✅ {{ p.stock }} disp.</span>
+                            {% else %}
+                                <span style="color:#e74c3c;">❌ Agotado</span>
+                            {% endif %}
+                        </p>
+                        {% if p.stock > 0 %}
+                            <a href="{{ url_for('add_to_cart', product_id=p.id) }}" 
+                               class="btn add-cart-btn" 
+                               onclick="showCartModal(); return false;">
+                                🛒 Agregar al carrito
+                            </a>
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+</section>
+
+<style>
+.stats-highlight {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(30, 30, 40, 0.7);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.stat-card {
+    background: rgba(20, 20, 30, 0.8);
+    border-radius: 10px;
+    padding: 1.2rem;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.stat-card h3 {
+    color: #0ff;
+    margin-top: 0;
+    font-size: 1.3rem;
+}
+
+.product-list {
+    text-align: left;
+    margin-top: 1rem;
+}
+
+.stat-product {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.stat-product.featured {
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.stat-product.featured img {
+    width: 80px !important;
+    height: 80px;
+    object-fit: cover;
+}
+
+.stat-product:last-child {
+    border-bottom: none;
+}
+
+.stat-product img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid rgba(0,255,255,0.3);
+}
+
+.stat-product div {
+    flex: 1;
+    text-align: left;
+}
+.stat-product div strong {
+    display: block;
+    color: #fff;
+    font-size: 1rem;
+}
+.stat-product div div {
+    font-size: 0.85rem;
+}
+
+/* ✅ Estilos para tarjeta clickeable */
+.product-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.product-card-link:hover {
+    transform: translateY(-5px);
+}
+
+.product-card-link:hover .product-card {
+    box-shadow: 0 8px 20px rgba(0, 255, 255, 0.3);
+    border-color: #0ff;
+}
+
+/* Botón de agregar al carrito */
+.add-cart-btn {
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+    color: white;
+    font-weight: bold;
+    margin-top: 0.8rem;
+    display: inline-block;
+    text-decoration: none;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+    transition: all 0.3s;
+}
+
+.add-cart-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 15px rgba(46, 204, 113, 0.5);
+}
+</style>
+
+<!-- ✅ Modal de carrito -->
+<div id="cartModal">
+    <div class="modal-content">
+        <h3>✅ ¡Producto agregado!</h3>
+        <p>¿Qué deseas hacer ahora?</p>
+        <a href="/" class="btn" style="background:#3498db;">🔍 Seguir comprando</a>
+        <a href="/cart" class="btn" style="background:#2ecc71;">🛒 Ir al carrito</a>
+        <a href="/checkout" class="btn" style="background:#e74c3c;" onclick="event.preventDefault(); document.getElementById('checkoutForm').submit();">💳 Comprar ahora</a>
+        
+        <!-- Formulario oculto para checkout directo -->
+        <form id="checkoutForm" action="/checkout" method="POST" style="display:none;"></form>
+        
+        <div style="margin-top:1.5rem;">
+            <button onclick="closeCartModal()" class="btn" style="background:#95a5a6;">❌ Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos para el modal */
+#cartModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+#cartModal .modal-content {
+    background: rgba(20, 20, 30, 0.95);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    max-width: 400px;
+    border: 2px solid #0ff;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+#cartModal h3 {
+    color: #0ff;
+    margin: 0 0 1.5rem;
+    font-size: 1.5rem;
+}
+
+#cartModal .btn {
+    margin: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    font-size: 1.1rem;
+    width: auto;
+}
+</style>
+
+<script>
+function showCartModal() {
+    document.getElementById('cartModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCartModal() {
+    document.getElementById('cartModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeCartModal();
+    }
+});
+
+// Cerrar al hacer clic fuera del modal
+document.getElementById('cartModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCartModal();
+    }
+});
+</script>
+{% endblock %}
