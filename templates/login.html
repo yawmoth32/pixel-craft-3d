@@ -23,10 +23,8 @@
             {% endif %}
         {% endwith %}
 
-        <!-- ✅ FORMULARIO CORREGIDO: con csrf_token -->
+        <!-- ✅ FORMULARIO SIN CSRF -->
         <form method="POST" class="login-form">
-            {{ csrf_token() }}
-            
             <div class="input-group">
                 <label for="username">Usuario</label>
                 <div class="input-with-icon">
