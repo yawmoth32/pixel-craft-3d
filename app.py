@@ -1,14 +1,10 @@
-# app.py - VERSION FINAL SEGURA Y FUNCIONAL
+# app.py - VERSION MINIMA PARA RENDER.COM
 import os
 from datetime import datetime
 import secrets
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from flask_talisman import Talisman
-from flask_wtf.csrf import CSRFProtect
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import smtplib
@@ -17,49 +13,16 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from sqlalchemy import func
 
-# Cargar variables de entorno
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'theroce86@gmail.com'
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-
-# ✅ SEGURIDAD: Talisman (HTTPS y headers)
-csp = {
-    'default-src': ["'self'"],
-    'script-src': ["'self'", "'unsafe-inline'"],
-    'style-src': ["'self'", "'unsafe-inline'"],
-    'img-src': ["'self'", "data:", "https://*"],
-    'font-src': ["'self'"],
-    'connect-src': ["'self'"],
-}
-Talisman(app, 
-         force_https_permanent=True,
-         strict_transport_security=True,
-         strict_transport_security_max_age=31536000,
-         content_security_policy=csp,
-         referrer_policy='strict-origin-when-cross-origin')
-
-# ✅ SEGURIDAD: CSRF Protection
-csrf = CSRFProtect(app)
-
-# ✅ SEGURIDAD: Rate Limiting
-limiter = Limiter(
-    key_func=get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"]
-)
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -173,13 +136,11 @@ def inject_settings():
         db.session.commit()
     return dict(settings=settings)
 
-# ✅ VALIDAR EXTENSIONES PERMITIDAS
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg'}
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ✅ SANITIZAR ENTRADAS
 def sanitize_input(text):
     import html
     if isinstance(text, str):
@@ -193,7 +154,6 @@ def send_order_email(order):
     msg['To'] = 'theroce86@gmail.com'
     msg['Subject'] = f'🛒 Nuevo pedido #{order.id} - Pixel Craft 3D'
 
-    # Sanitizar datos
     name = sanitize_input(f"{user.nombre} {user.apellido}")
     username = sanitize_input(user.username)
     phone = sanitize_input(user.telefono or 'No especificado')
@@ -348,7 +308,7 @@ def send_order_email(order):
         print(f"❌ Error al enviar correo: {e}")
         flash("⚠️ Error al notificar al administrador. Por favor, contacte directamente.")
 
-# ✅ RUTAS
+# ✅ Rutas principales
 @app.route('/')
 def index():
     products = Product.query.all()
@@ -375,7 +335,6 @@ def index():
                          now=datetime.now())
 
 @app.route('/register', methods=['GET', 'POST'])
-@limiter.limit("3 per hour")
 def register():
     if request.method == 'POST':
         username = request.form['username'].strip()
@@ -385,18 +344,15 @@ def register():
         if len(username) < 3 or len(username) > 20 or not username.replace('_', '').isalnum():
             flash('⚠️ Usuario inválido (3-20 caracteres, solo letras, números y _)')
             return redirect('/register')
-        
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             flash('⚠️ Email inválido')
             return redirect('/register')
-        
         if User.query.filter_by(username=username).first():
             flash('⚠️ Usuario ya existe.')
             return redirect('/register')
         if User.query.filter_by(email=email).first():
             flash('⚠️ Email ya registrado.')
             return redirect('/register')
-        
         if len(password) < 8:
             flash('🔒 Mínimo 8 caracteres.')
             return redirect('/register')
@@ -424,12 +380,10 @@ def register():
     return render_template('register.html', settings=settings, now=datetime.now())
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
             login_user(user)
@@ -628,13 +582,11 @@ def admin():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             image.save(filepath)
             
-            # ✅ Validación de imagen (con manejo de errores)
             try:
                 from PIL import Image
                 with Image.open(filepath) as img:
                     img.verify()
             except ImportError:
-                # Pillow no instalado, omitir validación
                 pass
             except Exception:
                 os.remove(filepath)
@@ -772,6 +724,7 @@ def uploaded_file(filename):
     safe_filename = secure_filename(filename)
     return send_from_directory(app.config['UPLOAD_FOLDER'], safe_filename)
 
+# ✅ PUERTO DINÁMICO PARA RENDER.COM
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(debug=False, host='0.0.0.0', port=port)
