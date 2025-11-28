@@ -143,6 +143,21 @@ main {
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
 }
 
+.toggle-btn {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.75rem 1rem; /* ✅ Igual que el input */
+    transition: color 0.2s;
+    height: 100%; /* ✅ Ocupa toda la altura del contenedor */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px; /* ✅ Ancho mínimo para que no se achique */
+}
+
 input, textarea, button {
     width: 100%;
     padding: 0.5rem;
