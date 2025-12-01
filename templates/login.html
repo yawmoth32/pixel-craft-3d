@@ -29,7 +29,7 @@
                 <label for="username">Usuario</label>
                 <div class="input-with-icon">
                     <span>👤</span>
-                    <input type="text" name="username" id="username" placeholder="Ej: Pixel Craft 3D" required>
+                    <input type="text" name="username" id="username" placeholder="Ej: Yawmoth32" required>
                 </div>
             </div>
 
@@ -54,7 +54,7 @@
 </section>
 
 <style>
-/* === ESTILO GENERAL === */
+/* === LOGIN STYLES - CORREGIDO PARA ALINEACIÓN PERFECTA === */
 .login-section {
     background: rgba(10, 10, 20, 0.9);
     padding: 2rem;
@@ -76,7 +76,6 @@
     border: 2px solid rgba(0, 255, 255, 0.2);
 }
 
-/* === ENCABEZADO === */
 .login-header {
     text-align: center;
     margin-bottom: 1.5rem;
@@ -111,13 +110,6 @@
     width: 60px;
 }
 
-.login-header p {
-    color: #aaa;
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
-}
-
-/* === ALERTAS === */
 .login-alert {
     background: rgba(255, 0, 0, 0.1);
     border: 1px solid #e74c3c;
@@ -134,7 +126,6 @@
     margin: 0.25rem 0;
 }
 
-/* === FORMULARIO === */
 .login-form {
     display: flex;
     flex-direction: column;
@@ -156,7 +147,7 @@
 .input-with-icon {
     position: relative;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     background: rgba(30, 30, 40, 0.7);
     border-radius: 6px;
     overflow: hidden;
@@ -170,21 +161,27 @@
 }
 
 .input-with-icon span {
-    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
     background: rgba(0, 255, 255, 0.1);
     color: #0ff;
     font-weight: bold;
     border-right: 1px solid rgba(0, 255, 255, 0.2);
+    min-width: 40px;
 }
 
 .input-with-icon input {
     flex: 1;
-    padding: 0.75rem 1rem;
+    padding: 0 1rem;
     background: transparent;
     color: white;
     border: none;
     outline: none;
     font-size: 1rem;
+    line-height: 1.5;
+    height: 100%;
 }
 
 .input-with-icon input:focus {
@@ -192,20 +189,25 @@
 }
 
 .toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: transparent;
     border: none;
     color: #aaa;
     font-size: 1rem;
     cursor: pointer;
-    padding: 0.75rem 1rem;
+    padding: 0 1rem;
     transition: color 0.2s;
+    height: 100%;
+    min-width: 40px;
 }
 
 .toggle-btn:hover {
     color: #0ff;
+    background: rgba(0, 255, 255, 0.05);
 }
 
-/* === BOTÓN DE LOGIN === */
 .login-btn {
     background: linear-gradient(45deg, #0ff, #0f9);
     color: black;
@@ -225,12 +227,6 @@
     box-shadow: 0 6px 15px rgba(0, 255, 255, 0.5);
 }
 
-.login-btn span {
-    margin-right: 0.5rem;
-    font-size: 1.2rem;
-}
-
-/* === FOOTER === */
 .login-footer {
     text-align: center;
     margin-top: 1.5rem;
@@ -241,29 +237,20 @@
     color: #0ff;
     text-decoration: none;
     font-weight: bold;
-    transition: all 0.2s;
 }
 
 .login-footer a:hover {
     text-shadow: 0 0 5px #0ff;
-    color: #0ff;
 }
 
-/* === RESPONSIVE === */
 @media (max-width: 480px) {
     .login-container {
         padding: 1.5rem;
         margin: 1rem;
     }
-    .login-header h2 {
-        font-size: 1.5rem;
-    }
-    .input-with-icon input {
-        font-size: 0.9rem;
-    }
-    .login-btn {
-        font-size: 1rem;
-        padding: 0.75rem 1rem;
+    .input-with-icon span,
+    .toggle-btn {
+        padding: 0 0.75rem;
     }
 }
 </style>
